@@ -31,7 +31,7 @@ body { background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
 .user-item img, .chat-item img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
 .user-meta { flex: 1; overflow: hidden; }
 .user-meta strong { display: block; }
-.user-meta small { color: #94a3b8; }
+.user-meta small { color: #94a3b8; display: block; }
 .item-actions { display: flex; gap: 6px; }
 .item-actions button { padding: 6px 10px; border-radius: 6px; border: none; background: #3b82f6; color: #fff; cursor: pointer; font-size: 12px; }
 .item-actions button.req { background: #f59e0b; }
@@ -50,7 +50,7 @@ body { background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
 .setting-row { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 12px; border-radius: 8px; }
 .setting-row button { padding: 8px 14px; border-radius: 6px; border: none; background: #3b82f6; color: #fff; cursor: pointer; }
 .settings h3 { margin-top: 10px; color: #94a3b8; font-size: 14px; }
-.danger { background: #ef4444 !important; }
+.danger { background: #ef4444 !important; padding: 12px; border-radius: 8px; border: none; color: #fff; cursor: pointer; }
 #devicesList { display: flex; flex-direction: column; gap: 8px; }
 .device-item { background: #1e293b; padding: 10px; border-radius: 8px; font-size: 13px; }
 
@@ -58,7 +58,7 @@ body { background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
 .chat-view { display: none; flex-direction: column; height: 100%; }
 .chat-view.active { display: flex; }
 .chat-header { display: flex; align-items: center; gap: 10px; padding: 12px; background: #1e293b; border-bottom: 1px solid #334155; position: relative; }
-.chat-header img { width: 40px; height: 40px; border-radius: 50%; }
+.chat-header img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
 .chat-header button { background: transparent; border: none; color: #fff; font-size: 20px; cursor: pointer; }
 .peer-info { flex: 1; }
 .peer-info small { color: #94a3b8; }
@@ -75,7 +75,7 @@ body { background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
 
 /* DROPDOWN */
 .dropdown { position: absolute; top: 50px; right: 10px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 6px; z-index: 10; }
-.dropdown button { display: block; width: 100%; padding: 8px 14px; background: transparent; border: none; color: #fff; text-align: left; cursor: pointer; border-radius: 6px; }
+.dropdown button { display: block; width: 100%; padding: 8px 14px; background: transparent; border: none; color: #fff; text-align: left; cursor: pointer; border-radius: 6px; font-size: 14px; }
 .dropdown button:hover { background: #334155; }
 .hidden { display: none !important; }
 
