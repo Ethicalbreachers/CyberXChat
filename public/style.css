@@ -1,0 +1,83 @@
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+body { background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
+#app { max-width: 480px; margin: 0 auto; height: 100vh; position: relative; background: #111827; display: flex; flex-direction: column; }
+.screen { display: none; flex-direction: column; height: 100%; }
+.screen.active { display: flex; }
+
+/* AUTH */
+.auth-box { padding: 30px; margin: auto; width: 100%; }
+.auth-box h1 { text-align: center; margin-bottom: 24px; }
+.tabs { display: flex; margin-bottom: 20px; background: #1f2937; border-radius: 10px; overflow: hidden; }
+.tab { flex: 1; padding: 12px; background: transparent; border: none; color: #94a3b8; cursor: pointer; }
+.tab.active { background: #3b82f6; color: #fff; }
+.form { display: none; flex-direction: column; gap: 12px; }
+.form.active { display: flex; }
+.form input, .form textarea { padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; }
+.form button { padding: 12px; border-radius: 8px; border: none; background: #3b82f6; color: #fff; font-weight: bold; cursor: pointer; }
+.form a { color: #60a5fa; font-size: 13px; text-align: center; text-decoration: none; }
+
+/* HEADER */
+.app-header { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #1e293b; border-bottom: 1px solid #334155; }
+.header-actions { display: flex; gap: 8px; }
+.hdr-btn { position: relative; background: #334155; border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+.badge { position: absolute; top: -6px; right: -6px; background: #ef4444; color: #fff; border-radius: 10px; font-size: 11px; padding: 1px 6px; }
+
+/* VIEWS */
+.view { display: none; flex: 1; overflow-y: auto; }
+.view.active { display: flex; flex-direction: column; }
+.list { padding: 10px; }
+.user-item, .chat-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #1e293b; border-radius: 10px; margin-bottom: 10px; cursor: pointer; }
+.user-item:hover, .chat-item:hover { background: #334155; }
+.user-item img, .chat-item img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.user-meta { flex: 1; overflow: hidden; }
+.user-meta strong { display: block; }
+.user-meta small { color: #94a3b8; }
+.item-actions { display: flex; gap: 6px; }
+.item-actions button { padding: 6px 10px; border-radius: 6px; border: none; background: #3b82f6; color: #fff; cursor: pointer; font-size: 12px; }
+.item-actions button.req { background: #f59e0b; }
+.unread-dot { background: #ef4444; color: #fff; border-radius: 12px; padding: 2px 8px; font-size: 12px; }
+
+/* PROFILE */
+.profile-edit, .profile-card { padding: 20px; display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.avatar-wrap img, .profile-card img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; }
+.profile-edit label { width: 100%; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #94a3b8; }
+.profile-edit input, .profile-edit textarea { padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; }
+.profile-edit button, .profile-card button { padding: 10px 20px; border-radius: 8px; border: none; background: #3b82f6; color: #fff; cursor: pointer; }
+
+/* SETTINGS */
+.settings { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.setting-row { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 12px; border-radius: 8px; }
+.setting-row button { padding: 8px 14px; border-radius: 6px; border: none; background: #3b82f6; color: #fff; cursor: pointer; }
+.settings h3 { margin-top: 10px; color: #94a3b8; font-size: 14px; }
+.danger { background: #ef4444 !important; }
+#devicesList { display: flex; flex-direction: column; gap: 8px; }
+.device-item { background: #1e293b; padding: 10px; border-radius: 8px; font-size: 13px; }
+
+/* CHAT */
+.chat-view { display: none; flex-direction: column; height: 100%; }
+.chat-view.active { display: flex; }
+.chat-header { display: flex; align-items: center; gap: 10px; padding: 12px; background: #1e293b; border-bottom: 1px solid #334155; position: relative; }
+.chat-header img { width: 40px; height: 40px; border-radius: 50%; }
+.chat-header button { background: transparent; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+.peer-info { flex: 1; }
+.peer-info small { color: #94a3b8; }
+.messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.msg { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 14px; position: relative; word-wrap: break-word; }
+.msg.me { align-self: flex-end; background: #3b82f6; }
+.msg.them { align-self: flex-start; background: #334155; }
+.msg .time { font-size: 10px; color: #cbd5e1; display: block; text-align: right; margin-top: 3px; }
+.msg .unsend { position: absolute; top: -8px; right: -8px; background: #ef4444; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; border: none; cursor: pointer; display: none; }
+.msg.me:hover .unsend { display: block; }
+.send-form { display: flex; gap: 8px; padding: 12px; background: #1e293b; }
+.send-form input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; }
+.send-form button { padding: 10px 16px; border-radius: 8px; border: none; background: #3b82f6; color: #fff; cursor: pointer; }
+
+/* DROPDOWN */
+.dropdown { position: absolute; top: 50px; right: 10px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 6px; z-index: 10; }
+.dropdown button { display: block; width: 100%; padding: 8px 14px; background: transparent; border: none; color: #fff; text-align: left; cursor: pointer; border-radius: 6px; }
+.dropdown button:hover { background: #334155; }
+.hidden { display: none !important; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; padding: 12px 20px; border-radius: 8px; border: 1px solid #334155; z-index: 100; }
