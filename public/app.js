@@ -1,23 +1,18 @@
 // ============ FIREBASE CONFIG ============
-// ⚠️ YAHAN APNI FIREBASE CONFIG PASTE KAREIN
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX",
-  authDomain: "your-project.firebaseapp.com",
-  databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-  projectId: "your-project",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef123456"
+  apiKey: "AIzaSyADtnh5wIUO4mBaX4Co6Q_jKYzhzSgZ6p0",
+  authDomain: "xcyberchat-dd4f5.firebaseapp.com",
+  databaseURL: "https://xcyberchat-dd4f5-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "xcyberchat-dd4f5",
+  storageBucket: "xcyberchat-dd4f5.firebasestorage.app",
+  messagingSenderId: "212631602126",
+  appId: "1:212631602126:web:e322b6d41da4b8e657619f"
 };
 
 let db, firebaseReady = false;
 let ADMIN_USER = 'admin', ADMIN_PASS = 'admin123';
 
 function initFirebase() {
-  if (!FIREBASE_CONFIG.databaseURL || FIREBASE_CONFIG.databaseURL.includes('your-project')) {
-    alert('❌ Firebase config missing! app.js me FIREBASE_CONFIG bharein.');
-    return;
-  }
   try {
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.database();
@@ -39,6 +34,7 @@ const sha = async (str) => {
 };
 function toast(msg) {
   const t = $('toast');
+  if (!t) { alert(msg); return; }
   t.textContent = msg;
   t.classList.remove('hidden');
   clearTimeout(t._t);
