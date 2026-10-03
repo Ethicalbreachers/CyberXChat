@@ -1,53 +1,85 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>Admin</title><style>
-body{font-family:sans-serif;background:#0f172a;color:#fff;padding:20px}
+<head>
+<meta charset="utf-8">
+<title>Admin Panel</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#0f172a;color:#fff;padding:20px}
 input,button{padding:8px;margin:4px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#fff}
 table{width:100%;border-collapse:collapse;margin-top:20px}
 td,th{padding:8px;border-bottom:1px solid #334155;text-align:left}
-button{background:#3b82f6;cursor:pointer}
+button{background:#3b82f6;cursor:pointer;color:#fff}
 button.d{background:#ef4444}
-</style></head>
+</style>
+</head>
 <body>
-<h2>Admin Panel</h2>
+<h2>🔧 Admin Panel</h2>
 <div id="auth">
-  <input id="u" placeholder="admin"/><input id="p" type="password" placeholder="password"/>
+  <input id="u" placeholder="admin"/>
+  <input id="p" type="password" placeholder="password"/>
   <button onclick="login()">Login</button>
 </div>
 <div id="panel" style="display:none">
   <h3>Users</h3>
-  <table id="tbl"><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Emoji</th><th>Action</th></tr></thead><tbody></tbody></table>
+  <table id="tbl">
+    <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Emoji</th><th>Action</th></tr></thead>
+    <tbody></tbody>
+  </table>
   <button class="d" onclick="location.reload()">Logout</button>
 </div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
-let db;
-async function init(){
-  const r = await fetch('/api/config'); const c = await r.json();
-  firebase.initializeApp(c.firebase); db = firebase.database();
-}
-init();
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyADtnh5wIUO4mBaX4Co6Q_jKYzhzSgZ6p0",
+  authDomain: "xcyberchat-dd4f5.firebaseapp.com",
+  databaseURL: "https://xcyberchat-dd4f5-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "xcyberchat-dd4f5",
+  storageBucket: "xcyberchat-dd4f5.firebasestorage.app",
+  messagingSenderId: "212631602126",
+  appId: "1:212631602126:web:e322b6d41da4b8e657619f"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
 function login(){
-  if(u.value==='admin' && p.value==='admin123'){
+  if(document.getElementById('u').value==='admin' && document.getElementById('p').value==='admin123'){
     document.getElementById('auth').style.display='none';
     document.getElementById('panel').style.display='block';
     loadUsers();
   } else alert('Wrong admin credentials');
 }
+
 function loadUsers(){
-  db.ref('users').on('value',s=>{
-    const users = s.val()||{}; const tb = document.querySelector('#tbl tbody'); tb.innerHTML='';
-    Object.values(users).forEach(u=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${u.emoji||''}${u.name}</td><td>@${u.username}</td><td>${u.email||''}</td>
-        <td><input value="${u.emoji||''}" style="width:50px" onchange="setEmoji('${u.uid}',this.value)"/></td>
-        <td><button class="d" onclick="ban('${u.uid}')">Ban</button></td>`;
-      tb.appendChild(tr);
+  db.ref('banned').on('value', (bSnap) => {
+    const banned = bSnap.val() || {};
+    db.ref('users').on('value', s => {
+      const users = s.val() || {};
+      const tb = document.querySelector('#tbl tbody');
+      tb.innerHTML = '';
+      Object.values(users).forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.emoji||''}${u.name}</td>
+          <td>@${u.username}</td>
+          <td>${u.email||''}</td>
+          <td><input value="${u.emoji||''}" style="width:60px" onchange="setEmoji('${u.uid}', this.value)"/></td>
+          <td>
+            ${banned[u.uid] 
+              ? `<button onclick="unban('${u.uid}')">Unban</button>` 
+              : `<button class="d" onclick="ban('${u.uid}')">Ban</button>`}
+          </td>`;
+        tb.appendChild(tr);
+      });
     });
   });
 }
-function setEmoji(uid,em){ db.ref('users/'+uid+'/emoji').set(em); }
+
+function setEmoji(uid, em){ db.ref('users/'+uid+'/emoji').set(em); }
 function ban(uid){ if(confirm('Ban user?')) db.ref('banned/'+uid).set(true); }
+function unban(uid){ db.ref('banned/'+uid).remove(); }
 </script>
-</body></html>
+</body>
+</html>
