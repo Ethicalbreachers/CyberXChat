@@ -10,7 +10,6 @@ const FIREBASE_CONFIG = {
 };
 
 let db, firebaseReady = false;
-let ADMIN_USER = 'admin', ADMIN_PASS = 'admin123';
 
 function initFirebase() {
   try {
@@ -34,7 +33,7 @@ const sha = async (str) => {
 };
 function toast(msg) {
   const t = $('toast');
-  if (!t) { alert(msg); return; }
+  if (!t) return;
   t.textContent = msg;
   t.classList.remove('hidden');
   clearTimeout(t._t);
@@ -54,6 +53,9 @@ function fmtTime(ts) {
 }
 function fmtDate(ts) {
   return new Date(ts).toLocaleString();
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 // ============ STATE ============
@@ -174,20 +176,23 @@ function watchUsers() {
       const users = snap.val() || {};
       const list = $('usersList');
       list.innerHTML = '';
-      Object.values(users).forEach(u => {
-        if (u.uid === me.uid) return;
-        if (banned[u.uid]) return;
+      const arr = Object.values(users).filter(u => u.uid !== me.uid && !banned[u.uid]);
+      if (!arr.length) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">👥</div><p>Koi doosra user nahi mila abhi</p></div>`;
+        return;
+      }
+      arr.forEach(u => {
         const div = document.createElement('div');
         div.className = 'user-item';
         div.innerHTML = `
           <img src="${u.avatar || 'https://via.placeholder.com/48'}" />
           <div class="user-meta">
-            <strong>${u.emoji || ''}${u.name}</strong>
-            <small>@${u.username} • ${u.online && !u.hideOnline ? '🟢 online' : 'offline'}</small>
+            <strong>${escapeHtml(u.emoji || '')}${escapeHtml(u.name)}</strong>
+            <small>@${escapeHtml(u.username)} • ${u.online && !u.hideOnline ? '🟢 online' : '⚪ offline'}</small>
           </div>
           <div class="item-actions">
-            <button data-uid="${u.uid}" class="chat-btn">Chat</button>
-            <button data-uid="${u.uid}" class="req-btn req">Request</button>
+            <button class="chat-btn">💬 Chat</button>
+            <button class="req-btn req">➕ Req</button>
           </div>`;
         div.querySelector('img').onclick = (e) => { e.stopPropagation(); openUserProfile(u.uid); };
         div.querySelector('.chat-btn').onclick = (e) => { e.stopPropagation(); startChatWith(u.uid); };
@@ -203,7 +208,7 @@ async function sendFriendRequest(toUid) {
   await db.ref('requests/' + toUid + '/' + me.uid).set({
     from: me.uid, to: toUid, at: now(), status: 'pending'
   });
-  toast('Request sent');
+  toast('✅ Request sent');
 }
 
 // ============ CHAT ============
@@ -239,6 +244,10 @@ function watchChats() {
 async function renderChatsList(myChats) {
   const list = $('chatsList');
   list.innerHTML = '';
+  if (!myChats.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">💬</div><p>Abhi koi chat nahi hai</p></div>`;
+    return;
+  }
   for (const c of myChats) {
     const peerUid = Object.keys(c.data.members).find(x => x !== me.uid);
     if (!peerUid) continue;
@@ -251,9 +260,9 @@ async function renderChatsList(myChats) {
     div.innerHTML = `
       <img src="${peer.avatar || 'https://via.placeholder.com/48'}" />
       <div class="user-meta">
-        <strong>${peer.emoji || ''}${peer.name} ${un ? `<span class="unread-dot">${un}</span>`: ''}</strong>
-        <small>${last.text ? last.text.slice(0,28) : 'No messages'}</small>
-        <small>@${peer.username} • ${peer.online && !peer.hideOnline ? '🟢 online' : 'offline'}</small>
+        <strong>${escapeHtml(peer.emoji || '')}${escapeHtml(peer.name)} ${un ? `<span class="unread-dot">${un}</span>`: ''}</strong>
+        <small>${last.text ? escapeHtml(last.text.slice(0,28)) : 'No messages yet'}</small>
+        <small>@${escapeHtml(peer.username)} • ${peer.online && !peer.hideOnline ? '🟢 online' : '⚪ offline'}</small>
       </div>`;
     div.onclick = () => openChat(peer, c.key);
     list.appendChild(div);
@@ -265,10 +274,11 @@ function openChat(peer, key) {
   currentChatKey = key;
   $('chatPeerName').textContent = (peer.emoji||'') + peer.name;
   $('chatPeerImg').src = peer.avatar || 'https://via.placeholder.com/40';
-  $('chatPeerStatus').textContent = peer.hideOnline ? 'offline' : (peer.online ? 'online' : 'last seen ' + fmtDate(peer.lastSeen));
+  $('chatPeerStatus').textContent = peer.hideOnline ? 'offline' : (peer.online ? '🟢 online' : 'last seen ' + fmtDate(peer.lastSeen));
   showView('chatView');
   $('appTitle').textContent = 'Chat';
 
+  // Reset unread
   db.ref('chats/' + key + '/unread/' + me.uid).set(0);
 
   if (unsubMessages) unsubMessages();
@@ -276,12 +286,16 @@ function openChat(peer, key) {
     const msgs = snap.val() || {};
     const list = $('messagesList');
     list.innerHTML = '';
-    Object.entries(msgs).forEach(([mid, m]) => {
+    const entries = Object.entries(msgs);
+    if (!entries.length) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">👋</div><p>Say hi to start the conversation</p></div>`;
+    }
+    entries.forEach(([mid, m]) => {
       if (m.deletedFor && m.deletedFor[me.uid]) return;
       const isMe = m.from === me.uid;
       const div = document.createElement('div');
       div.className = 'msg ' + (isMe ? 'me' : 'them');
-      div.innerHTML = `${m.text}<span class="time">${fmtTime(m.at)}</span>${isMe ? `<button class="unsend" data-mid="${mid}">×</button>` : ''}`;
+      div.innerHTML = `${escapeHtml(m.text)}<span class="time">${fmtTime(m.at)}</span>${isMe ? `<button class="unsend" data-mid="${mid}">×</button>` : ''}`;
       if (isMe) div.querySelector('.unsend').onclick = () => unsendMessage(key, mid);
       list.appendChild(div);
     });
@@ -293,9 +307,12 @@ function openChat(peer, key) {
     const u = s.val();
     if (!u) return;
     currentPeer = u;
-    const st = u.hideOnline ? 'offline' : (u.online ? 'online' : 'last seen ' + fmtDate(u.lastSeen));
+    const st = u.hideOnline ? 'offline' : (u.online ? '🟢 online' : 'last seen ' + fmtDate(u.lastSeen));
     $('chatPeerStatus').textContent = st + (u.typing ? ' • typing...' : '');
   });
+
+  // Focus input
+  setTimeout(() => $('msgInput').focus(), 200);
 }
 
 // ============ SEND MESSAGE ============
@@ -321,12 +338,13 @@ $('sendForm').addEventListener('submit', async (e) => {
 // ============ UNSEND ============
 async function unsendMessage(key, mid) {
   await db.ref('chats/' + key + '/messages/' + mid).remove();
-  toast('Unsent');
+  toast('🗑️ Unsent');
 }
 
 // ============ CLEAR CHAT ============
 $('clearChatBtn').onclick = async () => {
   if (!currentChatKey) return;
+  if (!confirm('Clear chat for everyone?')) return;
   await db.ref('chats/' + currentChatKey + '/messages').remove();
   toast('Chat cleared for everyone');
   $('chatMenu').classList.add('hidden');
@@ -339,14 +357,14 @@ $('avatarInput').addEventListener('change', (e) => {
   const reader = new FileReader();
   reader.onload = async () => {
     await db.ref('users/' + me.uid + '/avatar').set(reader.result);
-    toast('Avatar updated');
+    toast('✅ Avatar updated');
   };
   reader.readAsDataURL(f);
 });
 
 $('saveProfile').onclick = async () => {
   const newName = $('editName').value.trim();
-  const newUsername = $('editUsername').value.trim().toLowerCase();
+  const newUsername = $('editUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
   const newBio = $('editBio').value.trim();
   if (!newName || !newUsername) { toast('Name & username required'); return; }
   if (newUsername !== me.username) {
@@ -357,7 +375,7 @@ $('saveProfile').onclick = async () => {
     await db.ref('users/' + me.uid + '/username').set(newUsername);
   }
   await db.ref('users/' + me.uid).update({ name: newName, bio: newBio });
-  toast('Profile saved');
+  toast('✅ Profile saved');
 };
 
 // ============ SETTINGS ============
@@ -371,10 +389,10 @@ $('changePwBtn').onclick = async () => {
   const oldHash = await sha(oldPw);
   if (oldHash !== me.password) { toast('Wrong password'); return; }
   const newPw = prompt('New password:');
-  if (!newPw) return;
+  if (!newPw || newPw.length < 4) { toast('Password too short'); return; }
   const h = await sha(newPw);
   await db.ref('users/' + me.uid + '/password').set(h);
-  toast('Password updated');
+  toast('✅ Password updated');
 };
 
 $('addAccountBtn').onclick = () => {
@@ -384,9 +402,12 @@ $('addAccountBtn').onclick = () => {
   $('forgotForm').classList.remove('active');
   $('loginTab').classList.add('active');
   $('registerTab').classList.remove('active');
+  $('loginEmail').value = '';
+  $('loginPassword').value = '';
 };
 
 $('logoutBtn').onclick = async () => {
+  if (!confirm('Logout?')) return;
   await db.ref('users/' + me.uid + '/online').set(false);
   await db.ref('users/' + me.uid + '/lastSeen').set(now());
   let active = JSON.parse(localStorage.getItem('activeAccounts') || '[]');
@@ -399,7 +420,8 @@ $('logoutBtn').onclick = async () => {
 };
 
 $('deleteAccountBtn').onclick = async () => {
-  if (!confirm('Permanently delete account? This cannot be undone.')) return;
+  if (!confirm('⚠️ Permanently delete account? This cannot be undone.')) return;
+  if (!confirm('Are you REALLY sure?')) return;
   await db.ref('usernames/' + me.username).remove();
   await db.ref('emails/' + me.email.replace(/\./g,',')).remove();
   await db.ref('users/' + me.uid).remove();
@@ -417,10 +439,15 @@ function watchDevices() {
     const d = s.val() || {};
     const list = $('devicesList');
     list.innerHTML = '';
-    Object.values(d).forEach(dev => {
+    const arr = Object.values(d);
+    if (!arr.length) {
+      list.innerHTML = `<div class="device-item">Koi device nahi mila</div>`;
+      return;
+    }
+    arr.forEach(dev => {
       const el = document.createElement('div');
       el.className = 'device-item';
-      el.textContent = `${dev.ua || 'Unknown'} — logged in at ${fmtDate(dev.at)}`;
+      el.textContent = `📱 ${dev.ua || 'Unknown'} — logged in at ${fmtDate(dev.at)}`;
       list.appendChild(el);
     });
   });
@@ -442,7 +469,7 @@ async function openUserProfile(uidVal) {
   $('upAvatar').src = u.avatar || 'https://via.placeholder.com/100';
   $('upName').textContent = (u.emoji||'') + u.name;
   $('upUsername').textContent = '@' + u.username;
-  $('upBio').textContent = u.bio || '';
+  $('upBio').textContent = u.bio || 'No bio yet';
   $('upStatus').textContent = u.online && !u.hideOnline ? '🟢 online' : 'last seen ' + fmtDate(u.lastSeen);
   $('upStartChat').onclick = () => startChatWith(uidVal);
   showView('userProfileView');
@@ -469,7 +496,15 @@ $('backFromChat').onclick = () => {
   showView('chatsView');
 };
 
-$('chatMenuBtn').onclick = () => $('chatMenu').classList.toggle('hidden');
+$('chatMenuBtn').onclick = (e) => {
+  e.stopPropagation();
+  $('chatMenu').classList.toggle('hidden');
+};
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#chatMenu') && e.target.id !== 'chatMenuBtn') {
+    $('chatMenu').classList.add('hidden');
+  }
+});
 
 // ============ AUTH UI ============
 $('loginTab').onclick = () => {
@@ -522,7 +557,7 @@ $('forgotForm').addEventListener('submit', async (e) => {
   if (!newPw) return;
   const h = await sha(newPw);
   await db.ref('users/' + s.val() + '/password').set(h);
-  toast('Password reset. Please login.');
+  toast('✅ Password reset. Please login.');
   $('forgotForm').classList.remove('active');
   $('loginForm').classList.add('active');
 });
