@@ -49,6 +49,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 input, textarea {
@@ -100,11 +101,6 @@ input, textarea {
   padding: 28px 22px;
   margin: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 .auth-logo { text-align: center; margin-bottom: 24px; }
 .auth-logo .logo-icon {
@@ -153,8 +149,7 @@ input, textarea {
 }
 
 .form { display: none; flex-direction: column; gap: 12px; }
-.form.active { display: flex; animation: fadeIn 0.25s; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.form.active { display: flex; }
 
 .input-group { position: relative; display: flex; align-items: center; }
 .input-group .icon {
@@ -173,7 +168,7 @@ input, textarea {
   background: var(--bg-secondary);
   color: var(--text);
   font-size: 15px;
-  transition: all 0.2s;
+  transition: border-color 0.2s;
   outline: none;
   font-family: inherit;
 }
@@ -192,7 +187,6 @@ input, textarea {
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
-  transition: all 0.2s;
   box-shadow: 0 6px 20px var(--accent-glow);
   margin-top: 4px;
   font-family: inherit;
@@ -246,7 +240,6 @@ input, textarea {
   cursor: pointer;
   font-size: 18px;
   font-weight: 700;
-  transition: all 0.2s;
   width: 40px; height: 40px;
   display: flex; align-items: center; justify-content: center;
   font-family: inherit;
@@ -263,7 +256,7 @@ input, textarea {
   -webkit-overflow-scrolling: touch;
   min-height: 0;
 }
-.view.active { display: flex; flex-direction: column; animation: fadeIn 0.2s; }
+.view.active { display: flex; flex-direction: column; }
 .view::-webkit-scrollbar { width: 3px; }
 .view::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
@@ -320,7 +313,6 @@ input, textarea {
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: transform 0.1s;
   min-width: 38px;
   min-height: 38px;
   font-family: inherit;
@@ -515,6 +507,9 @@ input, textarea {
   flex-direction: column;
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
   background: var(--bg-secondary);
   z-index: 100;
   padding-top: var(--safe-top);
@@ -550,11 +545,12 @@ input, textarea {
   width: 42px; height: 42px;
   border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s, background 0.15s;
   flex-shrink: 0;
   font-weight: 700;
   font-family: inherit;
   padding: 0;
+  z-index: 10;
+  position: relative;
 }
 .chat-header > button:active {
   background: var(--accent);
@@ -606,12 +602,7 @@ input, textarea {
   font-size: 14px;
   position: relative;
   word-wrap: break-word;
-  animation: msgIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   line-height: 1.4;
-}
-@keyframes msgIn {
-  from { opacity: 0; transform: translateY(6px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .msg.me {
   align-self: flex-end;
@@ -676,7 +667,6 @@ input, textarea {
   color: var(--text);
   font-size: 15px;
   outline: none;
-  transition: border-color 0.2s;
   font-family: inherit;
   min-width: 0;
 }
@@ -698,7 +688,6 @@ input, textarea {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 16px var(--accent-glow);
-  transition: transform 0.1s;
   flex-shrink: 0;
   font-family: inherit;
   padding: 0;
@@ -717,11 +706,6 @@ input, textarea {
   z-index: 200;
   min-width: 220px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-  animation: dropIn 0.15s;
-}
-@keyframes dropIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 .dropdown button {
   display: block;
@@ -755,9 +739,7 @@ input, textarea {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
   padding: 0 !important;
-  box-shadow: none !important;
   font-family: inherit;
 }
 .back-top:active {
@@ -797,14 +779,12 @@ input, textarea {
   color: var(--text-dim);
   cursor: pointer;
   border-radius: 14px;
-  transition: all 0.2s;
   position: relative;
   font-family: inherit;
   min-height: 52px;
 }
 .nav-btn .nav-icon {
   font-size: 22px;
-  transition: all 0.2s;
   line-height: 1;
   filter: grayscale(0.3);
 }
@@ -820,7 +800,6 @@ input, textarea {
 .nav-btn.active .nav-icon {
   filter: grayscale(0);
   transform: translateY(-3px) scale(1.15);
-  filter: drop-shadow(0 4px 8px var(--accent-glow));
 }
 .nav-btn.active .nav-label {
   color: var(--accent);
@@ -836,11 +815,6 @@ input, textarea {
   height: 3px;
   background: var(--gradient);
   border-radius: 0 0 4px 4px;
-  animation: navIndicator 0.25s;
-}
-@keyframes navIndicator {
-  from { width: 0; opacity: 0; }
-  to { width: 32px; opacity: 1; }
 }
 
 .nav-badge {
@@ -856,11 +830,6 @@ input, textarea {
   min-width: 18px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(239,68,68,0.6);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
 }
 
 /* ============= TOAST ============= */
@@ -878,14 +847,9 @@ input, textarea {
   font-size: 14px;
   font-weight: 500;
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-  animation: toastIn 0.25s;
   max-width: 90%;
   text-align: center;
   pointer-events: none;
-}
-@keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* ============= EMPTY STATE ============= */
@@ -897,40 +861,11 @@ input, textarea {
 .empty-state .icon { font-size: 56px; margin-bottom: 14px; opacity: 0.4; }
 .empty-state p { font-size: 14px; }
 
-/* ============= LOADING ============= */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
-  color: var(--text-dim);
-}
-.spinner {
-  width: 32px; height: 32px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
 /* ============= SMALL SCREEN TUNING ============= */
 @media (max-width: 360px) {
   .nav-btn .nav-label { font-size: 9px; }
   .nav-btn .nav-icon { font-size: 20px; }
   .item-actions button { padding: 7px 10px; font-size: 13px; min-width: 34px; min-height: 34px; }
-}
-
-/* ============= LANDSCAPE ============= */
-@media (orientation: landscape) and (max-height: 500px) {
-  .app-header { min-height: 48px; padding: 8px 12px; }
-  .bottom-nav { min-height: 52px; padding: 4px 4px 6px; }
-  .nav-btn { min-height: 44px; padding: 6px 2px; }
-  .nav-btn .nav-icon { font-size: 18px; }
-  .nav-btn .nav-label { font-size: 9px; }
-  .chat-header { min-height: 52px; padding: 8px 10px; }
-  .chat-header img { width: 36px; height: 36px; }
-  .chat-header > button { width: 36px; height: 36px; font-size: 18px; }
 }
 </style>
 </head>
@@ -999,9 +934,6 @@ input, textarea {
   <div id="mainScreen" class="screen">
     <header class="app-header" id="appHeader">
       <h2 id="appTitle">Users</h2>
-      <div class="header-actions" id="headerActions">
-        <button id="chatMenuBtn" class="hdr-btn hidden" title="Menu" type="button">⋮</button>
-      </div>
     </header>
 
     <!-- USERS VIEW -->
@@ -1075,7 +1007,7 @@ input, textarea {
       </div>
     </section>
 
-    <!-- BOTTOM NAV (always visible except chat) -->
+    <!-- BOTTOM NAV -->
     <nav class="bottom-nav" id="bottomNav">
       <button class="nav-btn active" data-view="usersView" data-title="Users" type="button">
         <span class="nav-icon">👥</span>
@@ -1098,7 +1030,7 @@ input, textarea {
   </div>
 
   <!-- ============ CHAT VIEW (FULL SCREEN OVERLAY) ============ -->
-  <section id="chatView" class="view chat-view">
+  <section id="chatView" class="chat-view">
     <div class="chat-header">
       <button id="backFromChat" type="button">←</button>
       <img id="chatPeerImg" src="https://via.placeholder.com/40"/>
@@ -1162,7 +1094,7 @@ const sha = async (str) => {
 };
 function toast(msg) {
   const t = $('toast');
-  if (!t) { return; }
+  if (!t) return;
   t.textContent = msg;
   t.classList.remove('hidden');
   clearTimeout(t._t);
@@ -1172,33 +1104,50 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
 }
+
+// ==================== MAIN VIEW SWITCHER ====================
+// Ye function ab proper tarike se chatView ko handle karta hai
 function showView(id, title) {
   const isChat = id === 'chatView';
-  document.querySelectorAll('#mainScreen .view, #chatView').forEach(v => v.classList.remove('active'));
-  $(id).classList.add('active');
-
   const nav = $('bottomNav');
   const header = $('appHeader');
-  const chatMenuBtn = $('chatMenuBtn');
+
+  // 1. Saare normal views (mainScreen ke andar) hide karo
+  document.querySelectorAll('#mainScreen .view').forEach(v => v.classList.remove('active'));
+
+  // 2. Chat view ko specially handle karo (ye mainScreen ke bahar hai)
+  const chatView = $('chatView');
 
   if (isChat) {
+    // Chat kholo, nav + header hide karo
+    chatView.classList.add('active');
     nav.classList.add('hidden');
     header.classList.add('hidden');
-    $('chatMenu').classList.add('hidden');
   } else {
+    // Chat band karo
+    chatView.classList.remove('active');
+    // Requested view kholo
+    const targetView = $(id);
+    if (targetView) targetView.classList.add('active');
+    // Nav + header dikhao
     nav.classList.remove('hidden');
     header.classList.remove('hidden');
+    // Bottom nav me active state
     document.querySelectorAll('.nav-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.view === id);
     });
     if (title) $('appTitle').textContent = title;
   }
-  // Scroll top
-  setTimeout(() => {
-    const v = document.querySelector('#mainScreen .view.active');
-    if (v && !isChat) v.scrollTop = 0;
-  }, 10);
+
+  // 3. Scroll to top for non-chat views
+  if (!isChat) {
+    setTimeout(() => {
+      const v = document.querySelector('#mainScreen .view.active');
+      if (v) v.scrollTop = 0;
+    }, 10);
+  }
 }
+
 function fmtTime(ts) {
   const d = new Date(ts);
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
@@ -1427,6 +1376,7 @@ function openChat(peer, key) {
   $('chatPeerImg').src = peer.avatar || 'https://via.placeholder.com/40';
   $('chatPeerStatus').textContent = peer.hideOnline ? 'offline' : (peer.online ? '🟢 online' : 'last seen ' + fmtDate(peer.lastSeen));
 
+  // Show chat
   showView('chatView');
 
   db.ref('chats/' + key + '/unread/' + me.uid).set(0);
@@ -1449,7 +1399,6 @@ function openChat(peer, key) {
       if (isMe) div.querySelector('.unsend').onclick = (e) => { e.stopPropagation(); unsendMessage(key, mid); };
       list.appendChild(div);
     });
-    // auto scroll
     setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
   });
 
@@ -1462,7 +1411,6 @@ function openChat(peer, key) {
     $('chatPeerStatus').textContent = st + (u.typing ? ' • typing...' : '');
   });
 
-  // Focus input (Android friendly)
   setTimeout(() => {
     try { $('msgInput').focus(); } catch(e) {}
   }, 250);
@@ -1489,7 +1437,6 @@ async function sendMessage() {
   typingTimer = setTimeout(() => db.ref('users/' + me.uid + '/typing').set(false), 1500);
 }
 
-// Bind send form
 $('sendForm').addEventListener('submit', (e) => {
   e.preventDefault();
   sendMessage();
@@ -1498,7 +1445,6 @@ $('sendBtn').addEventListener('click', (e) => {
   e.preventDefault();
   sendMessage();
 });
-// Enter key
 $('msgInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
 });
@@ -1644,19 +1590,28 @@ async function openUserProfile(uidVal) {
   showView('userProfileView', 'Profile');
 }
 
-// ============ BACK BUTTONS ============
-$('backFromChat').onclick = () => {
+// ==================== BACK BUTTON HANDLERS ====================
+// Chat se back -> Chats view
+$('backFromChat').addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   if (unsubMessages) { unsubMessages(); unsubMessages = null; }
   if (unsubPeer) { unsubPeer(); unsubPeer = null; }
   currentChatKey = null;
   currentPeer = null;
   $('chatMenu').classList.add('hidden');
+  // Force remove active from chatView
+  $('chatView').classList.remove('active');
+  // Go back to Chats
   showView('chatsView', 'Chats');
-};
+});
 
-$('backFromProfile').onclick = () => {
+// User profile se back -> Users view
+$('backFromProfile').addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   showView('usersView', 'Users');
-};
+});
 
 // ============ BOTTOM NAV ============
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -1736,12 +1691,11 @@ $('forgotForm').addEventListener('submit', async (e) => {
 });
 
 // ============ ANDROID HARDWARE BACK BUTTON ============
-// WebView / Browser me back button handle
-window.addEventListener('popstate', (e) => {
+window.addEventListener('popstate', () => {
   handleAndroidBack();
+  // Re-push state so back keeps working
+  history.pushState({ page: 'main' }, '');
 });
-// Push initial state
-history.pushState({ page: 'main' }, '');
 
 function handleAndroidBack() {
   if ($('chatView').classList.contains('active')) {
@@ -1753,23 +1707,11 @@ function handleAndroidBack() {
     if (activeView && activeView.id !== 'usersView') {
       showView('usersView', 'Users');
     }
-  } else if ($('authScreen').classList.contains('active')) {
-    // do nothing
   }
-  // push state again so back button keeps working
-  history.pushState({ page: 'main' }, '');
 }
 
-// ============ KEYBOARD HANDLING (Android) ============
-// When keyboard opens, scroll to bottom of messages
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    const msgList = $('messagesList');
-    if (msgList && $('chatView').classList.contains('active')) {
-      setTimeout(() => { msgList.scrollTop = msgList.scrollHeight; }, 100);
-    }
-  });
-}
+// Initial history state
+history.pushState({ page: 'main' }, '');
 
 // ============ BOOT ============
 (async function boot() {
