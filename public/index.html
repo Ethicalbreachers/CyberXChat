@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Chat App</title>
+<title>CyberChat</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,13 +12,12 @@
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="screen active">
     <div class="auth-box">
-      <h1>💬 ChatApp</h1>
+      <h1>💬 CyberChat</h1>
       <div class="tabs">
         <button id="loginTab" class="tab active">Login</button>
         <button id="registerTab" class="tab">Register</button>
       </div>
 
-      <!-- LOGIN FORM -->
       <form id="loginForm" class="form active">
         <input type="text" id="loginEmail" placeholder="Email or Username" required />
         <input type="password" id="loginPassword" placeholder="Password" required />
@@ -26,7 +25,6 @@
         <a href="#" id="forgotLink">Forgot Password?</a>
       </form>
 
-      <!-- REGISTER FORM -->
       <form id="registerForm" class="form">
         <input type="text" id="regName" placeholder="Full Name" required />
         <input type="text" id="regUsername" placeholder="Username" required />
@@ -35,7 +33,6 @@
         <button type="submit">Register</button>
       </form>
 
-      <!-- FORGOT FORM -->
       <form id="forgotForm" class="form">
         <input type="email" id="forgotEmail" placeholder="Your Gmail" required />
         <button type="submit">Reset Password</button>
@@ -55,17 +52,14 @@
       </div>
     </header>
 
-    <!-- USERS LIST -->
     <section id="usersView" class="view active">
       <div id="usersList" class="list"></div>
     </section>
 
-    <!-- CHAT SESSIONS LIST -->
     <section id="chatsView" class="view">
       <div id="chatsList" class="list"></div>
     </section>
 
-    <!-- PROFILE VIEW -->
     <section id="profileView" class="view">
       <div class="profile-edit">
         <div class="avatar-wrap">
@@ -80,7 +74,6 @@
       </div>
     </section>
 
-    <!-- SETTINGS VIEW -->
     <section id="settingsView" class="view">
       <div class="settings">
         <div class="setting-row">
@@ -102,7 +95,6 @@
       </div>
     </section>
 
-    <!-- INDIVIDUAL CHAT -->
     <section id="chatView" class="view chat-view">
       <div class="chat-header">
         <button id="backFromChat">←</button>
@@ -123,7 +115,6 @@
       </form>
     </section>
 
-    <!-- OTHER USER PROFILE -->
     <section id="userProfileView" class="view">
       <button id="backFromProfile">←</button>
       <div class="profile-card">
