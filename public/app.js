@@ -1,29 +1,31 @@
-// ============ LOAD FIREBASE CONFIG FROM VERCEL ENV ============
+// ============ FIREBASE CONFIG ============
+// ⚠️ YAHAN APNI FIREBASE CONFIG PASTE KAREIN
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX",
+  authDomain: "your-project.firebaseapp.com",
+  databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+  projectId: "your-project",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef123456"
+};
+
 let db, firebaseReady = false;
 let ADMIN_USER = 'admin', ADMIN_PASS = 'admin123';
 
-async function initFirebase() {
+function initFirebase() {
+  if (!FIREBASE_CONFIG.databaseURL || FIREBASE_CONFIG.databaseURL.includes('your-project')) {
+    alert('❌ Firebase config missing! app.js me FIREBASE_CONFIG bharein.');
+    return;
+  }
   try {
-    const r = await fetch('/api/config');
-    const cfg = await r.json();
-    if (!cfg.firebase || !cfg.firebase.apiKey) {
-      // fallback local config for dev
-      cfg.firebase = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "000000",
-        appId: "1:0000:web:xxxx"
-      };
-    }
-    firebase.initializeApp(cfg.firebase);
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.database();
     firebaseReady = true;
+    console.log('✅ Firebase ready:', FIREBASE_CONFIG.projectId);
   } catch (e) {
-    console.error('Firebase init failed', e);
-    toast('Firebase config missing. Check /api/config');
+    console.error('❌ Firebase init failed', e);
+    alert('Firebase init failed: ' + e.message);
   }
 }
 
@@ -59,23 +61,24 @@ function fmtDate(ts) {
 }
 
 // ============ STATE ============
-let me = null;                    // { uid, username, name, bio, avatar, email }
+let me = null;
 let currentPeer = null;
+let currentChatKey = null;
 let unsubMessages = null;
+let unsubPeer = null;
 let typingTimer = null;
-let onlineRef = null;
-const accounts = {};              // uid -> account object (for multi-account)
+const accounts = {};
 
 // ============ AUTH ============
 async function register(name, username, email, password) {
-  if (!email.endsWith('@gmail.com')) return toast('Only Gmail allowed');
+  if (!email.endsWith('@gmail.com')) { toast('Only Gmail allowed'); return null; }
   username = username.toLowerCase().replace(/[^a-z0-9_]/g,'');
-  if (!username) return toast('Invalid username');
+  if (!username) { toast('Invalid username'); return null; }
 
   const snapUser = await db.ref('usernames/' + username).get();
-  if (snapUser.exists()) return toast('Username taken');
+  if (snapUser.exists()) { toast('Username taken'); return null; }
   const snapEmail = await db.ref('emails/' + email.replace(/\./g,',')).get();
-  if (snapEmail.exists()) return toast('Email already registered');
+  if (snapEmail.exists()) { toast('Email already registered'); return null; }
 
   const newUid = 'u_' + uid();
   const passHash = await sha(password);
@@ -83,28 +86,28 @@ async function register(name, username, email, password) {
     uid: newUid, name, username, email, bio: '', avatar: '',
     password: passHash, createdAt: now(),
     hideOnline: false, lastSeen: now(), online: true,
-    emoji: ''
+    emoji: '', typing: false
   };
   await db.ref('users/' + newUid).set(user);
   await db.ref('usernames/' + username).set(newUid);
-  await db.ref('emails/' + email.replace(/\./g,','), ).set(newUid);
+  await db.ref('emails/' + email.replace(/\./g,',')).set(newUid);
   return user;
 }
 
 async function login(identifier, password) {
   let userUid = null;
   if (identifier.includes('@')) {
-    if (!identifier.endsWith('@gmail.com')) return toast('Only Gmail allowed');
+    if (!identifier.endsWith('@gmail.com')) { toast('Only Gmail allowed'); return null; }
     const s = await db.ref('emails/' + identifier.replace(/\./g,',')).get();
     userUid = s.val();
   } else {
     const s = await db.ref('usernames/' + identifier.toLowerCase()).get();
     userUid = s.val();
   }
-  if (!userUid) return toast('Account not found');
+  if (!userUid) { toast('Account not found'); return null; }
   const u = (await db.ref('users/' + userUid).get()).val();
   const passHash = await sha(password);
-  if (u.password !== passHash) return toast('Wrong password');
+  if (u.password !== passHash) { toast('Wrong password'); return null; }
   return u;
 }
 
@@ -130,11 +133,14 @@ async function enterApp(user) {
   me = user;
   saveSession(user);
   showScreen('mainScreen');
+  showView('usersView');
+  $('appTitle').textContent = 'Users';
   startPresence();
   watchMyUser();
   watchUsers();
   watchChats();
   watchDevices();
+  logSession();
   toast('Welcome ' + user.name);
 }
 
@@ -166,12 +172,10 @@ function watchMyUser() {
 
 // ============ USERS LIST ============
 function watchUsers() {
-  db.ref('users').on('value', (snap) => {
-    const users = snap.val() || {};
-    // check admin ban
-    const bannedSnap = db.ref('banned');
-    bannedSnap.once('value').then(b => {
-      const banned = b.val() || {};
+  db.ref('banned').on('value', (bSnap) => {
+    const banned = bSnap.val() || {};
+    db.ref('users').on('value', (snap) => {
+      const users = snap.val() || {};
       const list = $('usersList');
       list.innerHTML = '';
       Object.values(users).forEach(u => {
@@ -189,13 +193,9 @@ function watchUsers() {
             <button data-uid="${u.uid}" class="chat-btn">Chat</button>
             <button data-uid="${u.uid}" class="req-btn req">Request</button>
           </div>`;
-        div.querySelector('img').onclick = () => openUserProfile(u.uid);
-        div.querySelector('.chat-btn').onclick = (e) => {
-          e.stopPropagation(); startChatWith(u.uid);
-        };
-        div.querySelector('.req-btn').onclick = (e) => {
-          e.stopPropagation(); sendFriendRequest(u.uid);
-        };
+        div.querySelector('img').onclick = (e) => { e.stopPropagation(); openUserProfile(u.uid); };
+        div.querySelector('.chat-btn').onclick = (e) => { e.stopPropagation(); startChatWith(u.uid); };
+        div.querySelector('.req-btn').onclick = (e) => { e.stopPropagation(); sendFriendRequest(u.uid); };
         list.appendChild(div);
       });
     });
@@ -204,17 +204,18 @@ function watchUsers() {
 
 // ============ FRIEND REQUEST ============
 async function sendFriendRequest(toUid) {
-  const myReq = { from: me.uid, to: toUid, at: now(), status: 'pending' };
-  await db.ref('requests/' + toUid + '/' + me.uid).set(myReq);
+  await db.ref('requests/' + toUid + '/' + me.uid).set({
+    from: me.uid, to: toUid, at: now(), status: 'pending'
+  });
   toast('Request sent');
 }
 
-// ============ CHAT SESSIONS ============
+// ============ CHAT ============
 function chatKey(a, b) { return [a, b].sort().join('_'); }
 
 async function startChatWith(peerUid) {
   const peer = (await db.ref('users/' + peerUid).get()).val();
-  if (!peer) return toast('User not found');
+  if (!peer) { toast('User not found'); return; }
   const key = chatKey(me.uid, peerUid);
   await db.ref('chats/' + key + '/members').set({ [me.uid]: true, [peerUid]: true });
   openChat(peer, key);
@@ -228,7 +229,6 @@ function watchChats() {
       if (c.members && c.members[me.uid]) myChats.push({ key, data: c });
     });
     renderChatsList(myChats);
-    // total unread
     let total = 0;
     myChats.forEach(c => {
       const un = c.data.unread && c.data.unread[me.uid] ? c.data.unread[me.uid] : 0;
@@ -245,6 +245,7 @@ async function renderChatsList(myChats) {
   list.innerHTML = '';
   for (const c of myChats) {
     const peerUid = Object.keys(c.data.members).find(x => x !== me.uid);
+    if (!peerUid) continue;
     const peer = (await db.ref('users/' + peerUid).get()).val();
     if (!peer) continue;
     const un = c.data.unread && c.data.unread[me.uid] ? c.data.unread[me.uid] : 0;
@@ -263,14 +264,15 @@ async function renderChatsList(myChats) {
   }
 }
 
-// ============ OPEN CHAT ============
 function openChat(peer, key) {
   currentPeer = peer;
+  currentChatKey = key;
   $('chatPeerName').textContent = (peer.emoji||'') + peer.name;
   $('chatPeerImg').src = peer.avatar || 'https://via.placeholder.com/40';
-  updatePeerStatus(peer.uid);
+  $('chatPeerStatus').textContent = peer.hideOnline ? 'offline' : (peer.online ? 'online' : 'last seen ' + fmtDate(peer.lastSeen));
   showView('chatView');
-  // clear unread
+  $('appTitle').textContent = 'Chat';
+
   db.ref('chats/' + key + '/unread/' + me.uid).set(0);
 
   if (unsubMessages) unsubMessages();
@@ -284,41 +286,28 @@ function openChat(peer, key) {
       const div = document.createElement('div');
       div.className = 'msg ' + (isMe ? 'me' : 'them');
       div.innerHTML = `${m.text}<span class="time">${fmtTime(m.at)}</span>${isMe ? `<button class="unsend" data-mid="${mid}">×</button>` : ''}`;
-      if (isMe) {
-        div.querySelector('.unsend').onclick = () => unsendMessage(key, mid);
-      }
+      if (isMe) div.querySelector('.unsend').onclick = () => unsendMessage(key, mid);
       list.appendChild(div);
     });
     list.scrollTop = list.scrollHeight;
   });
 
-  // peer presence
-  watchPeerPresence(peer.uid);
-}
-
-function watchPeerPresence(peerUid) {
-  const ref = db.ref('users/' + peerUid);
-  const cb = (s) => {
+  if (unsubPeer) unsubPeer();
+  unsubPeer = db.ref('users/' + peer.uid).on('value', (s) => {
     const u = s.val();
     if (!u) return;
+    currentPeer = u;
     const st = u.hideOnline ? 'offline' : (u.online ? 'online' : 'last seen ' + fmtDate(u.lastSeen));
     $('chatPeerStatus').textContent = st + (u.typing ? ' • typing...' : '');
-  };
-  ref.on('value', cb);
-}
-
-async function updatePeerStatus(peerUid) {
-  const u = (await db.ref('users/' + peerUid).get()).val();
-  if (!u) return;
-  $('chatPeerStatus').textContent = u.hideOnline ? 'offline' : (u.online ? 'online' : 'last seen ' + fmtDate(u.lastSeen));
+  });
 }
 
 // ============ SEND MESSAGE ============
 $('sendForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const txt = $('msgInput').value.trim();
-  if (!txt || !currentPeer) return;
-  const key = chatKey(me.uid, currentPeer.uid);
+  if (!txt || !currentPeer || !currentChatKey) return;
+  const key = currentChatKey;
   const mid = 'm_' + uid();
   await db.ref('chats/' + key + '/messages/' + mid).set({
     mid, from: me.uid, to: currentPeer.uid, text: txt, at: now()
@@ -328,7 +317,6 @@ $('sendForm').addEventListener('submit', async (e) => {
   await db.ref('chats/' + key + '/unread/' + currentPeer.uid).set(un + 1);
   $('msgInput').value = '';
 
-  // typing
   db.ref('users/' + me.uid + '/typing').set(true);
   clearTimeout(typingTimer);
   typingTimer = setTimeout(() => db.ref('users/' + me.uid + '/typing').set(false), 1500);
@@ -340,17 +328,16 @@ async function unsendMessage(key, mid) {
   toast('Unsent');
 }
 
-// ============ CLEAR CHAT (for everyone) ============
+// ============ CLEAR CHAT ============
 $('clearChatBtn').onclick = async () => {
-  if (!currentPeer) return;
-  const key = chatKey(me.uid, currentPeer.uid);
-  await db.ref('chats/' + key + '/messages').remove();
+  if (!currentChatKey) return;
+  await db.ref('chats/' + currentChatKey + '/messages').remove();
   toast('Chat cleared for everyone');
   $('chatMenu').classList.add('hidden');
 };
 
 // ============ PROFILE EDIT ============
-$('avatarInput').addEventListener('change', async (e) => {
+$('avatarInput').addEventListener('change', (e) => {
   const f = e.target.files[0];
   if (!f) return;
   const reader = new FileReader();
@@ -365,10 +352,10 @@ $('saveProfile').onclick = async () => {
   const newName = $('editName').value.trim();
   const newUsername = $('editUsername').value.trim().toLowerCase();
   const newBio = $('editBio').value.trim();
-  if (!newName || !newUsername) return toast('Name & username required');
+  if (!newName || !newUsername) { toast('Name & username required'); return; }
   if (newUsername !== me.username) {
     const s = await db.ref('usernames/' + newUsername).get();
-    if (s.exists()) return toast('Username taken');
+    if (s.exists()) { toast('Username taken'); return; }
     await db.ref('usernames/' + me.username).remove();
     await db.ref('usernames/' + newUsername).set(me.uid);
     await db.ref('users/' + me.uid + '/username').set(newUsername);
@@ -386,7 +373,7 @@ $('changePwBtn').onclick = async () => {
   const oldPw = prompt('Current password:');
   if (!oldPw) return;
   const oldHash = await sha(oldPw);
-  if (oldHash !== me.password) return toast('Wrong password');
+  if (oldHash !== me.password) { toast('Wrong password'); return; }
   const newPw = prompt('New password:');
   if (!newPw) return;
   const h = await sha(newPw);
@@ -396,6 +383,11 @@ $('changePwBtn').onclick = async () => {
 
 $('addAccountBtn').onclick = () => {
   showScreen('authScreen');
+  $('loginForm').classList.add('active');
+  $('registerForm').classList.remove('active');
+  $('forgotForm').classList.remove('active');
+  $('loginTab').classList.add('active');
+  $('registerTab').classList.remove('active');
 };
 
 $('logoutBtn').onclick = async () => {
@@ -419,6 +411,7 @@ $('deleteAccountBtn').onclick = async () => {
   active = active.filter(x => x !== me.uid);
   localStorage.setItem('activeAccounts', JSON.stringify(active));
   localStorage.removeItem('acc_' + me.uid);
+  localStorage.removeItem('currentUid');
   location.reload();
 };
 
@@ -436,26 +429,26 @@ function watchDevices() {
     });
   });
 }
-// log current session
-(function logSession() {
-  const sid = 's_' + uid();
+
+function logSession() {
+  const sid = 's_' + uid() + '_' + now();
   const ua = navigator.userAgent;
-  setTimeout(() => {
-    if (me) db.ref('sessions/' + me.uid + '/' + sid).set({ ua, at: now() });
-  }, 500);
-  window._sid = sid;
-})();
+  db.ref('sessions/' + me.uid + '/' + sid).set({ ua, at: now() });
+  window.addEventListener('beforeunload', () => {
+    db.ref('sessions/' + me.uid + '/' + sid).remove();
+  });
+}
 
 // ============ USER PROFILE VIEW ============
-async function openUserProfile(uid) {
-  const u = (await db.ref('users/' + uid).get()).val();
-  if (!u) return toast('User not found');
+async function openUserProfile(uidVal) {
+  const u = (await db.ref('users/' + uidVal).get()).val();
+  if (!u) { toast('User not found'); return; }
   $('upAvatar').src = u.avatar || 'https://via.placeholder.com/100';
   $('upName').textContent = (u.emoji||'') + u.name;
   $('upUsername').textContent = '@' + u.username;
   $('upBio').textContent = u.bio || '';
   $('upStatus').textContent = u.online && !u.hideOnline ? '🟢 online' : 'last seen ' + fmtDate(u.lastSeen);
-  $('upStartChat').onclick = () => startChatWith(uid);
+  $('upStartChat').onclick = () => startChatWith(uidVal);
   showView('userProfileView');
 }
 $('backFromProfile').onclick = () => showView('usersView');
@@ -474,12 +467,12 @@ $('settingsBtn').onclick = () => {
   showView('settingsView');
 };
 $('backFromChat').onclick = () => {
-  if (unsubMessages) unsubMessages();
+  if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+  if (unsubPeer) { unsubPeer(); unsubPeer = null; }
   $('appTitle').textContent = 'Chats';
   showView('chatsView');
 };
 
-// menu
 $('chatMenuBtn').onclick = () => $('chatMenu').classList.toggle('hidden');
 
 // ============ AUTH UI ============
@@ -502,18 +495,16 @@ $('backLogin').onclick = (e) => {
 
 $('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!firebaseReady) return toast('Firebase not ready');
-  const id = $('loginEmail').value.trim();
-  const pw = $('loginPassword').value;
+  if (!firebaseReady) { toast('Firebase not ready'); return; }
   try {
-    const u = await login(id, pw);
+    const u = await login($('loginEmail').value.trim(), $('loginPassword').value);
     if (u) enterApp(u);
   } catch (err) { toast(err.message || 'Login failed'); }
 });
 
 $('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!firebaseReady) return toast('Firebase not ready');
+  if (!firebaseReady) { toast('Firebase not ready'); return; }
   try {
     const u = await register(
       $('regName').value.trim(),
@@ -528,9 +519,9 @@ $('registerForm').addEventListener('submit', async (e) => {
 $('forgotForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = $('forgotEmail').value.trim();
-  if (!email.endsWith('@gmail.com')) return toast('Only Gmail allowed');
+  if (!email.endsWith('@gmail.com')) { toast('Only Gmail allowed'); return; }
   const s = await db.ref('emails/' + email.replace(/\./g,',')).get();
-  if (!s.exists()) return toast('Email not registered');
+  if (!s.exists()) { toast('Email not registered'); return; }
   const newPw = prompt('Enter new password:');
   if (!newPw) return;
   const h = await sha(newPw);
@@ -542,7 +533,9 @@ $('forgotForm').addEventListener('submit', async (e) => {
 
 // ============ BOOT ============
 (async function boot() {
-  await initFirebase();
+  initFirebase();
+  if (!firebaseReady) return;
+
   loadAccounts();
   const currentUid = localStorage.getItem('currentUid');
   if (currentUid && accounts[currentUid]) {
